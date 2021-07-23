@@ -32,6 +32,8 @@ func initRouter() {
 
 	r.HandleFunc("/auth/login", loginHandler)
 	r.HandleFunc("/auth/register", registerHandler)
+	r.HandleFunc("/user/updateUser", updateUserHandler)
+	
 
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, r))
 	log.Fatal(http.ListenAndServe(":8080", nil))
