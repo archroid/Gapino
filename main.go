@@ -23,7 +23,6 @@ func main() {
 }
 
 func initRouter() {
-
 	r := mux.NewRouter()
 
 	r.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +32,10 @@ func initRouter() {
 	r.HandleFunc("/auth/login", loginHandler)
 	r.HandleFunc("/auth/register", registerHandler)
 	r.HandleFunc("/user/updateUser", updateUserHandler)
-	
+	r.HandleFunc("/user/uploadImage", uploadImageHandler)
+
+	staticDir := "/images/"
+	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
 	http.Handle("/", handlers.LoggingHandler(os.Stdout, r))
 	log.Fatal(http.ListenAndServe(":8080", nil))
