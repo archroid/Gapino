@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Follow struct {
@@ -44,4 +46,61 @@ func unfollowHandler(w http.ResponseWriter, r *http.Request) {
 		unfollow(unfollower_id, unfollowing_id)
 		json.NewEncoder(w).Encode(map[string]string{"status": "done"})
 	}
+}
+
+func getFollowersHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.FormValue("id")
+	filter := bson.M{"following_id": id}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(0)
+
+	cur, err := relationsCollection.Find(context.TODO(), filter, findOptions)
+	if err != nil {
+		log.Println(err)
+	}
+
+	var results []*Follow
+	for cur.Next(context.TODO()) {
+		var elem Follow
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, &elem)
+	}
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+	cur.Close(context.TODO())
+	json.NewEncoder(w).Encode(results)
+
+}
+
+func getFollowingsHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.FormValue("id")
+	filter := bson.M{"follower_id": id}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(0)
+
+	cur, err := relationsCollection.Find(context.TODO(), filter, findOptions)
+	if err != nil {
+		log.Println(err)
+	}
+
+	var results []*Follow
+	for cur.Next(context.TODO()) {
+		var elem Follow
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+		results = append(results, &elem)
+	}
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+	cur.Close(context.TODO())
+	json.NewEncoder(w).Encode(results)
 }

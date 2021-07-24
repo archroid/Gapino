@@ -38,6 +38,9 @@ func initRouter() {
 	r.HandleFunc("/relation/follow", followHandler).Methods("POST")
 	r.HandleFunc("/relation/unfollow", unfollowHandler).Methods("POST")
 
+	r.HandleFunc("/user/getFollowers", getFollowersHandler).Methods("POST")
+	r.HandleFunc("/user/getFollowings", getFollowingsHandler).Methods("POST")
+
 	staticDir := "/images/"
 	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
