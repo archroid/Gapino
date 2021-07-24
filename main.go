@@ -15,11 +15,11 @@ import (
 )
 
 var usersCollection *mongo.Collection
+var relationsCollection *mongo.Collection
 
 func main() {
 	initDatabase()
 	initRouter()
-
 }
 
 func initRouter() {
@@ -30,10 +30,13 @@ func initRouter() {
 	})
 
 	r.HandleFunc("/auth/login", loginHandler)
-	r.HandleFunc("/auth/register", registerHandler)
-	r.HandleFunc("/user/updateUser", updateUserHandler)
-	r.HandleFunc("/user/uploadImage", uploadImageHandler)
-	r.HandleFunc("/user/getUser", getUserHandler)
+	r.HandleFunc("/auth/register", registerHandler).Methods("POST")
+	r.HandleFunc("/user/updateUser", updateUserHandler).Methods("POST")
+	r.HandleFunc("/user/uploadImage", uploadImageHandler).Methods("POST")
+	r.HandleFunc("/user/getUser", getUserHandler).Methods("POST")
+
+	r.HandleFunc("/relation/follow", followHandler).Methods("POST")
+	r.HandleFunc("/relation/unfollow", unfollowHandler).Methods("POST")
 
 	staticDir := "/images/"
 	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
@@ -62,4 +65,5 @@ func initDatabase() {
 	fmt.Println("Connected to MongoDB!")
 
 	usersCollection = db.Database("gapino").Collection("users")
+	relationsCollection = db.Database("gapino").Collection("relations")
 }

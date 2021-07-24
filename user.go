@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -46,7 +45,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		json.NewEncoder(w).Encode(map[string]string{"token": user.Token})
 	}
-
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -108,27 +106,16 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if birthday == "" {
 		birthday = user.Birthday
 	}
-	followers_count, _ := strconv.ParseInt(r.FormValue("followers_count"), 10, 64)
-	print(followers_count)
-	if followers_count == 0 {
-		followers_count = user.Followers_count
-	}
-	followings_count, _ := strconv.ParseInt(r.FormValue("followings_count"), 10, 64)
-	if followings_count == 0 {
-		followings_count = user.Followings_count
-	}
 
 	filter := bson.M{"token": token}
 
 	update := bson.M{"$set": bson.M{
-		"email":            email,
-		"password":         password,
-		"name":             name,
-		"bio":              bio,
-		"location":         location,
-		"birthday":         birthday,
-		"followers_count":  followers_count,
-		"followings_count": followings_count,
+		"email":    email,
+		"password": password,
+		"name":     name,
+		"bio":      bio,
+		"location": location,
+		"birthday": birthday,
 	},
 	}
 
@@ -219,4 +206,44 @@ func generateToken(username string) string {
 	signedToken, _ := token.SignedString([]byte("gapino"))
 
 	return string(signedToken)
+}
+
+func follow(follower_id string, following_id string) {
+	var user User
+	filter_follower := bson.M{"id": follower_id}
+	_ = usersCollection.FindOne(context.TODO(), filter_follower).Decode(&user)
+	update_followers := bson.M{"$set": bson.M{
+		"followings_count": user.Followings_count + 1,
+	},
+	}
+	_, _ = usersCollection.UpdateOne(context.TODO(), filter_follower, update_followers)
+
+	filter_following := bson.M{"id": following_id}
+	_ = usersCollection.FindOne(context.TODO(), following_id).Decode(&user)
+	update_followings := bson.M{"$set": bson.M{
+		"followers_count": user.Followers_count + 1,
+	},
+	}
+	_, _ = usersCollection.UpdateOne(context.TODO(), filter_following, update_followings)
+}
+
+func unfollow(unfollower_id string, unfollowing_id string) {
+	var user User
+	
+	filter_unfollower := bson.M{"id": unfollower_id}
+	_ = usersCollection.FindOne(context.TODO(), filter_unfollower).Decode(&user)
+	update_followers := bson.M{"$set": bson.M{
+		"followings_count": user.Followings_count - 1,
+	},
+	}
+	_, _ = usersCollection.UpdateOne(context.TODO(), filter_unfollower, update_followers)
+
+	filter_unfollowing := bson.M{"id": unfollowing_id}
+	_ = usersCollection.FindOne(context.TODO(), filter_unfollowing).Decode(&user)
+	update_followings := bson.M{"$set": bson.M{
+		"followers_count": user.Followers_count - 1,
+	},
+	}
+	_, _ = usersCollection.UpdateOne(context.TODO(), filter_unfollowing, update_followings)
+
 }
