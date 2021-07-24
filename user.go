@@ -77,8 +77,8 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	token := r.FormValue("token")
 
-	filter_find := bson.M{"token": token}
-	_ = usersCollection.FindOne(context.TODO(), filter_find).Decode(&user)
+	filter := bson.M{"token": token}
+	_ = usersCollection.FindOne(context.TODO(), filter).Decode(&user)
 
 	email := r.FormValue("email")
 	if email == "" {
@@ -107,8 +107,6 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		birthday = user.Birthday
 	}
 
-	filter := bson.M{"token": token}
-
 	update := bson.M{"$set": bson.M{
 		"email":    email,
 		"password": password,
@@ -122,6 +120,8 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := usersCollection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		log.Panic(err)
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"status": "done"})
 	}
 }
 
@@ -229,7 +229,7 @@ func follow(follower_id string, following_id string) {
 
 func unfollow(unfollower_id string, unfollowing_id string) {
 	var user User
-	
+
 	filter_unfollower := bson.M{"id": unfollower_id}
 	_ = usersCollection.FindOne(context.TODO(), filter_unfollower).Decode(&user)
 	update_followers := bson.M{"$set": bson.M{
