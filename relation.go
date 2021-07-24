@@ -32,9 +32,12 @@ func unfollowHandler(w http.ResponseWriter, r *http.Request) {
 	unfollower_id := r.FormValue("unfollower_id")
 	unfollowing_id := r.FormValue("unfollowing_id")
 
-	delete_filter := bson.D{{"follower_id", unfollower_id}, {"unfollowing_id", unfollowing_id}}
+	delete_filter := bson.M{
+		"follower_id":  unfollower_id,
+		"following_id": unfollowing_id,
+	}
 
-	_, err := usersCollection.DeleteOne(context.TODO(), delete_filter)
+	_, err := relationsCollection.DeleteOne(context.TODO(), delete_filter)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	} else {
