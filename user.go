@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/rs/xid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 type User struct {
+	Id               string
 	Email            string
 	Password         string
 	Token            string
@@ -57,15 +59,16 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := usersCollection.FindOne(context.TODO(), filter).Decode(&user)
 	if err == nil {
-		http.Error(w, "Used email", http.StatusBadRequest)
+		http.Error(w, "This email is already available in the database", http.StatusBadRequest)
 	} else {
 		token := generateToken(email)
-		insertUser := User{email, password, token, "", time.Now().Unix(), "Default", "", "", "", "", "", 0, 0}
+		id := xid.New().String()
+		insertUser := User{id, email, password, token, "", time.Now().Unix(), "Default", "", "", "", "", "", 0, 0}
 		_, err := usersCollection.InsertOne(context.TODO(), insertUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		} else {
-			json.NewEncoder(w).Encode(map[string]string{"token": token})
+			json.NewEncoder(w).Encode(map[string]string{"token": token, "id": id})
 		}
 
 	}
@@ -78,6 +81,16 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	filter_find := bson.M{"token": token}
 	_ = usersCollection.FindOne(context.TODO(), filter_find).Decode(&user)
+
+	email := r.FormValue("email")
+	if email == "" {
+		email = user.Email
+	}
+
+	password := r.FormValue("password")
+	if password == "" {
+		password = user.Password
+	}
 
 	name := r.FormValue("name")
 	if name == "" {
@@ -108,6 +121,8 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	filter := bson.M{"token": token}
 
 	update := bson.M{"$set": bson.M{
+		"email":            email,
+		"password":         password,
 		"name":             name,
 		"bio":              bio,
 		"location":         location,
@@ -125,6 +140,7 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 	token := r.FormValue("token")
+	id := r.FormValue("id")
 	imgType := r.FormValue("type")
 
 	file, _, err := r.FormFile("file")
@@ -140,7 +156,7 @@ func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch imgType {
 	case "avatar":
-		filepath = "images/avatars/" + token
+		filepath = "images/avatars/" + id
 		update := bson.D{
 			{"$set", bson.D{
 				{"avatar_url", "http://192.168.1.108:8080/" + filepath},
@@ -152,7 +168,7 @@ func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 			log.Print(err)
 		}
 	case "header":
-		filepath = "images/headers/" + token
+		filepath = "images/headers/" + id
 		update := bson.D{
 			{"$set", bson.D{
 				{"header_url", "http://127.0.0.1:8080/" + filepath},
@@ -173,7 +189,18 @@ func uploadImageHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.Copy(f, file)
 
 	json.NewEncoder(w).Encode(map[string]string{"status": "http://127.0.0.1:8080/" + filepath})
+}
 
+func getUserHandler(w http.ResponseWriter, r *http.Request) {
+	var user User
+	id := r.FormValue("id")
+	filter_find := bson.M{"id": id}
+	err := usersCollection.FindOne(context.TODO(), filter_find).Decode(&user)
+	if err != nil {
+		http.Error(w, "Could not find the user", http.StatusBadRequest)
+	} else {
+		json.NewEncoder(w).Encode(user)
+	}
 }
 
 func generateToken(username string) string {

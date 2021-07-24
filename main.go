@@ -33,6 +33,7 @@ func initRouter() {
 	r.HandleFunc("/auth/register", registerHandler)
 	r.HandleFunc("/user/updateUser", updateUserHandler)
 	r.HandleFunc("/user/uploadImage", uploadImageHandler)
+	r.HandleFunc("/user/getUser", getUserHandler)
 
 	staticDir := "/images/"
 	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
