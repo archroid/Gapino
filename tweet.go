@@ -19,6 +19,7 @@ type Tweet struct {
 	Created_at  int64
 	Likes_count int64
 	Image_Url   string
+	Likes       []string
 }
 
 func addTweetHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +27,7 @@ func addTweetHandler(w http.ResponseWriter, r *http.Request) {
 	creator_id := r.FormValue("id")
 	tweet_id := xid.New().String()
 
-	insertTweet := Tweet{tweet_id, text, creator_id, time.Now().Unix(), 0, ""}
+	insertTweet := Tweet{tweet_id, text, creator_id, time.Now().Unix(), 0, "", []string{}}
 	_, err := tweetsCollection.InsertOne(context.TODO(), insertTweet)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -119,7 +120,59 @@ func deleteTweetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func tweetLikeHandler(w http.ResponseWriter, r *http.Request) {
-	// tweet_id := r.FormValue("tweet_id")
-	// user_id := r.FormValue("user_id")
+	tweet_id := r.FormValue("tweet_id")
+	user_id := r.FormValue("user_id")
+
+	var tweet Tweet
+
+	filter := bson.M{
+		"tweet_id": tweet_id,
+	}
+	_ = tweetsCollection.FindOne(context.TODO(), filter).Decode(&tweet)
+
+	update := bson.M{
+		"$addToSet": bson.M{
+			"likes": bson.M{
+				"$each": []string{user_id},
+			},
+		},
+		"$set": bson.M{
+			"likes_count": tweet.Likes_count + 1,
+		},
+	}
+
+	_, err := tweetsCollection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		log.Panic(err)
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"status": "done"})
+	}
+}
+
+func tweetUnLikeHandler(w http.ResponseWriter, r *http.Request) {
+	tweet_id := r.FormValue("tweet_id")
+	user_id := r.FormValue("user_id")
+
+	var tweet Tweet
+
+	filter := bson.M{
+		"tweet_id": tweet_id,
+	}
+
+	_ = tweetsCollection.FindOne(context.TODO(), filter).Decode(&tweet)
+
+	update := bson.M{
+		"$pull": bson.M{"likes": user_id},
+		"$set": bson.M{
+			"likes_count": tweet.Likes_count - 1,
+		},
+	}
+
+	_, err := tweetsCollection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		log.Panic(err)
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"status": "done"})
+	}
 
 }

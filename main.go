@@ -48,6 +48,9 @@ func initRouter() {
 	r.HandleFunc("/tweet/get", getTweetHandler).Methods("POST")
 	r.HandleFunc("/tweet/getAll", getUserTweetsHandler).Methods("POST")
 
+	r.HandleFunc("/tweet/like", tweetLikeHandler).Methods("POST")
+	r.HandleFunc("/tweet/unLike", tweetUnLikeHandler).Methods("POST")
+
 	staticDir := "/images/"
 	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
