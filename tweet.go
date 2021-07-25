@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/rs/xid"
@@ -175,4 +177,41 @@ func tweetUnLikeHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"status": "done"})
 	}
 
+}
+
+func uploadTweetImageHandler(w http.ResponseWriter, r *http.Request) {
+
+	tweet_id := r.FormValue("tweet_id")
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	os.MkdirAll("images/tweets", os.ModePerm)
+
+	filepath := "images/tweets/" + tweet_id
+
+	f, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	_, _ = io.Copy(f, file)
+
+	filter := bson.M{"tweet_id": tweet_id}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"image_url", "http://127.0.0.1:8080/" + filepath},
+		}},
+	}
+
+	_, errr := tweetsCollection.UpdateOne(context.TODO(), filter, update)
+	if errr != nil {
+		log.Print(err)
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"status": "done"})
+	}
 }

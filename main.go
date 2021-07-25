@@ -44,6 +44,7 @@ func initRouter() {
 	r.HandleFunc("/user/getFollowings", getFollowingsHandler).Methods("POST")
 
 	r.HandleFunc("/tweet/add", addTweetHandler).Methods("POST")
+	r.HandleFunc("/tweet/uploadImage", uploadTweetImageHandler).Methods("POST")
 	r.HandleFunc("/tweet/update", updateTweetHandler).Methods("POST")
 	r.HandleFunc("/tweet/delete", deleteTweetHandler).Methods("POST")
 	r.HandleFunc("/tweet/get", getTweetHandler).Methods("POST")
