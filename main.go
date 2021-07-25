@@ -17,6 +17,7 @@ import (
 var usersCollection *mongo.Collection
 var relationsCollection *mongo.Collection
 var tweetsCollection *mongo.Collection
+var commentsCollection *mongo.Collection
 
 func main() {
 	initDatabase()
@@ -46,10 +47,14 @@ func initRouter() {
 	r.HandleFunc("/tweet/update", updateTweetHandler).Methods("POST")
 	r.HandleFunc("/tweet/delete", deleteTweetHandler).Methods("POST")
 	r.HandleFunc("/tweet/get", getTweetHandler).Methods("POST")
-	r.HandleFunc("/tweet/getAll", getUserTweetsHandler).Methods("POST")
-
+	r.HandleFunc("/tweet/all", getUserTweetsHandler).Methods("POST")
 	r.HandleFunc("/tweet/like", tweetLikeHandler).Methods("POST")
 	r.HandleFunc("/tweet/unLike", tweetUnLikeHandler).Methods("POST")
+
+	r.HandleFunc("/comment/add", addCommentHandler).Methods("POST")
+	r.HandleFunc("/comment/update", updateCommentHandler).Methods("POST")
+	r.HandleFunc("/comment/delete", deleteCommentHandler).Methods("POST")
+	r.HandleFunc("/comment/all", getCommentsByTweetHandler).Methods("POST")
 
 	staticDir := "/images/"
 	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
@@ -80,4 +85,5 @@ func initDatabase() {
 	usersCollection = db.Database("gapino").Collection("users")
 	relationsCollection = db.Database("gapino").Collection("relations")
 	tweetsCollection = db.Database("gapino").Collection("tweets")
+	commentsCollection = db.Database("gapino").Collection("comments")
 }

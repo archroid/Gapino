@@ -61,7 +61,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		token := generateToken(email)
 		id := xid.New().String()
-		insertUser := User{id, email, password, token, "", time.Now().Unix(), "Default", "", "", "", "", "", 0, 0}
+		createdAt := time.Now().Unix()
+		insertUser := User{id, email, password, token, "", createdAt, "Default", "", "", "", "", "", 0, 0}
 		_, err := usersCollection.InsertOne(context.TODO(), insertUser)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
