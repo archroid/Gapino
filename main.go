@@ -57,6 +57,9 @@ func initRouter() {
 	r.HandleFunc("/comment/delete", deleteCommentHandler).Methods("POST")
 	r.HandleFunc("/comment/all", getCommentsByTweetHandler).Methods("POST")
 
+	r.HandleFunc("/timeline/get", timeLineHandler).Methods("POST")
+
+
 	staticDir := "/images/"
 	http.Handle(staticDir, http.StripPrefix(staticDir, http.FileServer(http.Dir("."+staticDir))))
 
